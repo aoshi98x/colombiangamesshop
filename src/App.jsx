@@ -5,9 +5,10 @@ import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
 import { HeroCarousel } from './components/HeroCarousel';
 import { ProductCard } from './components/ProductCard';
+import { HowToBuySection } from './components/HowToBuySection';
 import { CartDrawer } from './components/CartDrawer';
 import { ProductDetail } from './pages/ProductDetail';
-import { AdminPanel } from './pages/AdminPanel.jsx';
+import { AdminPanel } from './pages/AdminPanel';
 import { useProducts } from './hooks/useProducts';
 import { Rocket, Handshake, MessageSquare, Loader2, MessageCircle } from 'lucide-react';
 
@@ -127,6 +128,9 @@ function StoreContent() {
                     ))}
                   </div>
                 )}
+
+                {/* Sección Cómo Comprar */}
+                <HowToBuySection />
               </main>
             </>
           } />
