@@ -7,5 +7,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/colombiangamesshop/',
+  base: '/colombiangamesshop/', nm
 })

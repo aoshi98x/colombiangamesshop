@@ -1,7 +1,7 @@
 // src/pages/ProductDetail.jsx
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { useProducts, formatCOP } from '../hooks/useProducts';
+import { useState, useEffect } from 'react';
+import { useProducts, formatCOP, FALLBACK_IMAGE } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import { ArrowLeft, ShoppingCart, Sparkles, ShieldCheck, Truck, MessageCircle, Plus, Minus, Loader2 } from 'lucide-react';
 
@@ -11,6 +11,13 @@ export const ProductDetail = () => {
     const { products, loading } = useProducts();
     const { addToCart, cart } = useCart();
     const [quantity, setQuantity] = useState(1);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+    const product = products.find((p) => p.id === Number(id));
+
+    useEffect(() => {
+        setActiveImageIndex(0);
+    }, [id]);
 
     if (loading) {
         return (
@@ -20,8 +27,6 @@ export const ProductDetail = () => {
             </div>
         );
     }
-
-    const product = products.find((p) => p.id === Number(id));
 
     if (!product) {
         return (
@@ -39,6 +44,9 @@ export const ProductDetail = () => {
         );
     }
 
+    const images = product.images && product.images.length > 0 ? product.images : [FALLBACK_IMAGE];
+    const currentActiveImage = images[activeImageIndex] || images[0];
+
     const itemInCart = cart.find((item) => item.id === product.id);
     const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
     const maxAvailableToAdd = Math.max(0, product.stock - currentQtyInCart);
@@ -51,19 +59,16 @@ export const ProductDetail = () => {
         setQuantity(1);
     };
 
-    // Enlace de WhatsApp prellenado con el nombre de la carta
     const whatsappMessage = encodeURIComponent(
         `Hola Colombian Games Shop, me interesa este producto: ${product.name} (${product.tcg}) - ${formatCOP(product.price)}`
     );
 
-    // Productos relacionados del mismo TCG
     const relatedProducts = products
         .filter((p) => p.tcg === product.tcg && p.id !== product.id)
         .slice(0, 4);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-            {/* Botón Volver */}
             <button
                 onClick={() => navigate(-1)}
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-cg-blue mb-6 transition-colors cursor-pointer"
@@ -72,16 +77,38 @@ export const ProductDetail = () => {
                 Volver al catálogo
             </button>
 
-            {/* Contenedor Principal del Producto */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-8 p-6 sm:p-10">
 
-                {/* Columna Izquierda: Imagen */}
-                <div className="bg-slate-50 rounded-xl border border-slate-100 p-6 flex items-center justify-center min-h-[340px] sm:min-h-[440px]">
-                    <img
-                        src={product.image}
-                        alt={product.name}
-                        className="max-h-[400px] w-auto object-contain rounded-lg shadow-sm hover:scale-105 transition-transform duration-300"
-                    />
+                {/* Columna Izquierda: Galería de Imágenes */}
+                <div className="flex flex-col gap-4">
+                    <div className="bg-slate-50 rounded-xl border border-slate-100 p-6 flex items-center justify-center h-[360px] sm:h-[420px]">
+                        <img
+                            src={currentActiveImage}
+                            alt={product.name}
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+                            className="max-h-full w-auto object-contain rounded-lg shadow-sm"
+                        />
+                    </div>
+
+                    {images.length > 1 && (
+                        <div className="flex gap-3 overflow-x-auto pb-2">
+                            {images.map((imgUrl, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setActiveImageIndex(idx)}
+                                    className={`w-20 h-20 rounded-lg border-2 bg-slate-50 p-1 shrink-0 overflow-hidden cursor-pointer transition-all ${activeImageIndex === idx ? 'border-cg-blue ring-2 ring-cg-blue/20' : 'border-slate-200 opacity-70 hover:opacity-100'
+                                        }`}
+                                >
+                                    <img
+                                        src={imgUrl}
+                                        alt={`Vista ${idx + 1}`}
+                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+                                        className="w-full h-full object-contain"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Columna Derecha: Información y Compra */}
@@ -101,7 +128,6 @@ export const ProductDetail = () => {
                         {product.name}
                     </h1>
 
-                    {/* Expansión y Rareza */}
                     {(product.expansion || product.rarity) && (
                         <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-4">
                             <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
@@ -111,7 +137,6 @@ export const ProductDetail = () => {
                         </div>
                     )}
 
-                    {/* Precio */}
                     <div className="py-4 border-y border-slate-100 my-2">
                         <span className="text-xs text-slate-400 uppercase font-semibold block">Precio en Pesos Colombianos</span>
                         <span className="text-3xl sm:text-4xl font-black text-slate-900">
@@ -124,7 +149,6 @@ export const ProductDetail = () => {
                         </span>
                     </div>
 
-                    {/* Descripción */}
                     <div className="my-4">
                         <h3 className="text-xs font-bold uppercase text-slate-400 mb-1.5">Descripción</h3>
                         <p className="text-slate-600 text-sm leading-relaxed">
@@ -132,7 +156,6 @@ export const ProductDetail = () => {
                         </p>
                     </div>
 
-                    {/* Selector de Cantidad y Botones */}
                     <div className="mt-auto pt-4 space-y-3">
                         {!isOutOfStock && (
                             <div className="flex items-center gap-4">
@@ -180,22 +203,9 @@ export const ProductDetail = () => {
                             </a>
                         </div>
                     </div>
-
-                    {/* Garantías rápidas */}
-                    <div className="grid grid-cols-2 gap-3 mt-6 pt-5 border-t border-slate-100 text-xs text-slate-500">
-                        <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-cg-blue shrink-0" />
-                            <span>Originalidad 100% verificada</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Truck className="w-4 h-4 text-cg-blue shrink-0" />
-                            <span>Envío blindado a todo el país</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {/* Productos Relacionados */}
             {relatedProducts.length > 0 && (
                 <section className="mt-14">
                     <h2 className="text-lg font-bold text-slate-800 mb-5">Más de {product.tcg}</h2>
@@ -207,7 +217,12 @@ export const ProductDetail = () => {
                                 className="bg-white rounded-xl border border-slate-200 p-4 hover:border-cg-blue transition-all flex flex-col"
                             >
                                 <div className="h-44 bg-slate-50 rounded-lg p-3 flex items-center justify-center mb-3">
-                                    <img src={item.image} alt={item.name} className="max-h-full object-contain" />
+                                    <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+                                        className="max-h-full object-contain"
+                                    />
                                 </div>
                                 <span className="text-[11px] font-bold text-cg-blue uppercase">{item.expansion}</span>
                                 <h4 className="font-bold text-slate-800 text-sm line-clamp-1 mt-0.5">{item.name}</h4>

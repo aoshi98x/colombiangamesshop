@@ -7,6 +7,7 @@ import { HeroCarousel } from './components/HeroCarousel';
 import { ProductCard } from './components/ProductCard';
 import { CartDrawer } from './components/CartDrawer';
 import { ProductDetail } from './pages/ProductDetail';
+import { AdminPanel } from './pages/AdminPanel.jsx';
 import { useProducts } from './hooks/useProducts';
 import { Rocket, Handshake, MessageSquare, Loader2, MessageCircle } from 'lucide-react';
 
@@ -132,6 +133,7 @@ function StoreContent() {
 
           {/* Vista Puntual de Producto */}
           <Route path="/producto/:id" element={<ProductDetail />} />
+          <Route path="/admin" element={<AdminPanel />} />
         </Routes>
       </div>
 
