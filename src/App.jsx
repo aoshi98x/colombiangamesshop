@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
 import { HeroCarousel } from './components/HeroCarousel';
@@ -96,8 +96,8 @@ function StoreContent() {
                         key={tcg}
                         onClick={() => setSelectedTcg(tcg)}
                         className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${selectedTcg === tcg
-                            ? 'bg-cg-blue text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          ? 'bg-cg-blue text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           }`}
                       >
                         {tcg}
@@ -158,9 +158,9 @@ function StoreContent() {
 export default function App() {
   return (
     <CartProvider>
-      <BrowserRouter>
+      <HashRouter>
         <StoreContent />
-      </BrowserRouter>
+      </HashRouter>
     </CartProvider>
   );
 }
