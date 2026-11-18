@@ -43,7 +43,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
 
                 {/* Logo */}
                 <a
-                    href="#inicio"
+                    href="/"
                     onClick={() => handleSelectCategory('Todos')}
                     className="flex items-center gap-2.5 shrink-0 group"
                 >
@@ -187,7 +187,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                             onMouseEnter={() => setPromosDropdownOpen(true)}
                             onMouseLeave={() => setPromosDropdownOpen(false)}
                         >
-                            <button 
+                            <button
                                 onClick={() => handleNavigateFranchise('promos-accesorios')}
                                 className="flex items-center gap-1 hover:text-sky-100 transition-colors py-3 cursor-pointer"
                             >
