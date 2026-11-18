@@ -40,6 +40,7 @@ function StoreContent() {
         selectedTcg={selectedTcg}
         setSelectedTcg={setSelectedTcg}
         tcgCategories={tcgCategories}
+        allProducts={products}
       />
       <CartDrawer />
 

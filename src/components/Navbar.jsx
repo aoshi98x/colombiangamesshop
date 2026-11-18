@@ -1,31 +1,98 @@
 // src/components/Navbar.jsx
-import { ShoppingCart, Search, Heart, ChevronDown, Menu, X } from 'lucide-react';
+import { ShoppingCart, Search, Heart, ChevronDown, Menu, X, ArrowRight, Layers, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { formatCOP, FALLBACK_IMAGE } from '../hooks/useProducts';
 import logoImg from '../assets/logo.png';
 
-export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTcg, tcgCategories }) => {
+export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTcg, tcgCategories, allProducts = [] }) => {
     const { totalItems, setIsCartOpen } = useCart();
     const { totalFavorites } = useFavorites();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [tcgDropdownOpen, setTcgDropdownOpen] = useState(false);
     const [promosDropdownOpen, setPromosDropdownOpen] = useState(false);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const searchRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Cerrar sugerencias al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setIsSearchFocused(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     // Filtrar categorías que no sean promos o accesorios para el dropdown de TCG
-    const franchiseCategories = tcgCategories.filter(tcg => {
-        const lower = tcg.toLowerCase();
-        return tcg !== 'Todos' && !lower.includes('promo') && !lower.includes('accesorio');
-    });
+    const franchiseCategories = useMemo(() => {
+        return tcgCategories.filter(tcg => {
+            const lower = tcg.toLowerCase();
+            return tcg !== 'Todos' && !lower.includes('promo') && !lower.includes('accesorio');
+        });
+    }, [tcgCategories]);
+
+    // Búsqueda inteligente de sugerencias (máximo 3 productos y coincidencias de TCG)
+    const { productSuggestions, matchedTcg } = useMemo(() => {
+        const trimmed = searchQuery.trim().toLowerCase();
+        if (!trimmed || trimmed.length < 2) {
+            return { productSuggestions: [], matchedTcg: null };
+        }
+
+        // 1. Revisar si coincide con alguna franquicia/TCG (ej: "pokemon", "yugioh", "magic", "promo")
+        const foundTcg = tcgCategories.find(tcg => {
+            if (tcg === 'Todos') return false;
+            const tcgLower = tcg.toLowerCase();
+            const normalizedQuery = trimmed.replace(/[^a-z0-9]/g, '');
+            const normalizedTcg = tcgLower.replace(/[^a-z0-9]/g, '');
+            return tcgLower.includes(trimmed) || (normalizedQuery.length >= 3 && normalizedTcg.includes(normalizedQuery));
+        });
+
+        // 2. Buscar en los productos por cualquier palabra/término (nombre, tcg, expansión, rareza, descripción)
+        const terms = trimmed.split(/\s+/).filter(Boolean);
+
+        const scoredProducts = allProducts.map(product => {
+            const searchHaystack = `${product.name} ${product.tcg} ${product.expansion} ${product.rarity} ${product.description}`.toLowerCase();
+
+            // Puntuación por coincidencia de términos
+            let matchesCount = 0;
+            terms.forEach(term => {
+                if (searchHaystack.includes(term)) matchesCount++;
+            });
+
+            // Relevancia: si coincide con el nombre exacto o empieza con él, suma más puntos
+            let score = matchesCount;
+            if (product.name.toLowerCase().includes(trimmed)) score += 3;
+            if (product.name.toLowerCase().startsWith(trimmed)) score += 2;
+            if (product.tcg.toLowerCase().includes(trimmed)) score += 1;
+
+            return { product, score, matchesAll: matchesCount === terms.length };
+        });
+
+        // Filtrar productos que coincidan con al menos un término y ordenar por relevancia
+        const filtered = scoredProducts
+            .filter(item => item.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
+            .map(item => item.product);
+
+        return {
+            productSuggestions: filtered,
+            matchedTcg: foundTcg || null
+        };
+    }, [searchQuery, allProducts, tcgCategories]);
 
     const handleSelectCategory = (category) => {
         setSelectedTcg(category);
         setTcgDropdownOpen(false);
         setPromosDropdownOpen(false);
         setMobileMenuOpen(false);
+        setIsSearchFocused(false);
         navigate('/');
     };
 
@@ -33,7 +100,29 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
         setTcgDropdownOpen(false);
         setPromosDropdownOpen(false);
         setMobileMenuOpen(false);
+        setIsSearchFocused(false);
         navigate(`/categoria/${encodeURIComponent(tcg)}`);
+    };
+
+    const handleSelectProduct = (productId) => {
+        setIsSearchFocused(false);
+        navigate(`/producto/${productId}`);
+    };
+
+    const handleSearchSubmit = (e) => {
+        if (e) e.preventDefault();
+        setIsSearchFocused(false);
+
+        // Si lo que escribió es exactamente el nombre de una franquicia o TCG, navega a CategoryPage
+        if (matchedTcg) {
+            handleNavigateFranchise(matchedTcg);
+            return;
+        }
+
+        // Si hay una única sugerencia directa muy clara, o si ya está en home, hace scroll o búsqueda general
+        if (location.pathname !== '/') {
+            navigate('/');
+        }
     };
 
     return (
@@ -43,7 +132,6 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
 
                 {/* Logo */}
                 <a
-                    href="/"
                     onClick={() => handleSelectCategory('Todos')}
                     className="flex items-center gap-2.5 shrink-0 group"
                 >
@@ -62,23 +150,146 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                     </div>
                 </a>
 
-                {/* Buscador Central */}
-                <div className="hidden md:flex flex-1 max-w-xl mx-6">
-                    <div className="flex w-full">
-                        <input
-                            type="text"
-                            placeholder="Buscador de Productos"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full border border-slate-300 border-r-0 rounded-l-sm px-4 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-cg-blue"
-                        />
+                {/* Buscador Central con Sugerencias Inteligentes */}
+                <div ref={searchRef} className="hidden md:flex flex-1 max-w-xl mx-6 relative">
+                    <form onSubmit={handleSearchSubmit} className="flex w-full">
+                        <div className="relative w-full">
+                            <input
+                                type="text"
+                                placeholder="Buscar cartas, expansiones, TCGs..."
+                                value={searchQuery}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setIsSearchFocused(true);
+                                }}
+                                className="w-full border border-slate-300 border-r-0 rounded-l-md px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-cg-blue focus:ring-1 focus:ring-cg-blue/20"
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setIsSearchFocused(false);
+                                    }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                         <button
-                            type="button"
-                            className="bg-cg-blue hover:bg-cg-blue-dark text-white font-semibold px-6 py-2 rounded-r-sm text-sm transition-colors cursor-pointer"
+                            type="submit"
+                            className="bg-cg-blue hover:bg-cg-blue-dark text-white font-semibold px-6 py-2.5 rounded-r-md text-sm transition-colors cursor-pointer shrink-0"
                         >
                             Buscar
                         </button>
-                    </div>
+                    </form>
+
+                    {/* Ventana Flotante de Sugerencias (Dropdown con 3 resultados y categoría) */}
+                    {isSearchFocused && searchQuery.trim().length >= 2 && (
+                        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                            {/* Sugerencia de Franquicia/TCG si coincide */}
+                            {matchedTcg && (
+                                <div className="p-2 border-b border-slate-100 bg-sky-50/60">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNavigateFranchise(matchedTcg)}
+                                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-sky-100/70 text-left transition-colors cursor-pointer group"
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-lg bg-cg-blue/20 text-cg-blue flex items-center justify-center shrink-0">
+                                                <Layers className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-cg-blue block">
+                                                    Ir a la página de Franquicia
+                                                </span>
+                                                <span className="text-sm font-extrabold text-slate-800">
+                                                    Ver todo el catálogo de {matchedTcg}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <ArrowRight className="w-4 h-4 text-cg-blue group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Sugerencia de 3 Productos Más Cercanos */}
+                            {productSuggestions.length > 0 ? (
+                                <div className="p-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5 block">
+                                        Productos sugeridos ({productSuggestions.length})
+                                    </span>
+                                    <div className="space-y-1">
+                                        {productSuggestions.map((prod) => {
+                                            const prodImage = prod.images?.[0] || prod.image || FALLBACK_IMAGE;
+                                            return (
+                                                <button
+                                                    key={prod.id}
+                                                    type="button"
+                                                    onClick={() => handleSelectProduct(prod.id)}
+                                                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left cursor-pointer group"
+                                                >
+                                                    <div className="w-12 h-12 rounded-md bg-slate-100 p-1 shrink-0 flex items-center justify-center border border-slate-200/80">
+                                                        <img
+                                                            src={prodImage}
+                                                            alt={prod.name}
+                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+                                                            className="max-h-full max-w-full object-contain"
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex-grow min-w-0">
+                                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                                            <span className="text-[10px] font-bold uppercase text-cg-blue bg-sky-50 px-1.5 py-0.2 rounded border border-sky-100">
+                                                                {prod.tcg}
+                                                            </span>
+                                                            {prod.expansion && (
+                                                                <span className="text-[11px] text-slate-400 truncate">
+                                                                    {prod.expansion}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <h4 className="text-sm font-bold text-slate-800 group-hover:text-cg-blue transition-colors truncate">
+                                                            {prod.name}
+                                                        </h4>
+                                                    </div>
+
+                                                    <div className="text-right shrink-0 pl-2">
+                                                        <span className="text-sm font-black text-slate-900 block">
+                                                            {formatCOP(prod.price)}
+                                                        </span>
+                                                        <span className={`text-[10px] font-semibold block ${prod.stock > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                            {prod.stock > 0 ? `${prod.stock} disp.` : 'Agotado'}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ) : !matchedTcg ? (
+                                <div className="p-6 text-center text-slate-500 text-xs">
+                                    No se encontraron productos coincidentes para <span className="font-bold text-slate-700">"{searchQuery}"</span>.
+                                </div>
+                            ) : null}
+
+                            {/* Pie del dropdown con atajo para ver todos los resultados */}
+                            <div className="bg-slate-50 px-4 py-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                                <span className="text-slate-400 text-[11px]">
+                                    Presiona Enter para buscar en todo el catálogo
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={handleSearchSubmit}
+                                    className="text-cg-blue hover:text-cg-blue-dark font-bold text-[11px] hover:underline cursor-pointer"
+                                >
+                                    Ver todos los resultados
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Acciones Derecha (Favoritos + Carrito) */}
@@ -120,20 +331,72 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                 </div>
             </div>
 
-            {/* Buscador Móvil */}
-            <div className="md:hidden px-4 pb-3">
-                <div className="flex w-full">
+            {/* Buscador Móvil con Sugerencias */}
+            <div className="md:hidden px-4 pb-3 relative">
+                <form onSubmit={handleSearchSubmit} className="flex w-full">
                     <input
                         type="text"
-                        placeholder="Buscador de Productos"
+                        placeholder="Buscar cartas, expansiones, TCGs..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full border border-slate-300 border-r-0 rounded-l-sm px-3 py-2 text-sm text-slate-700 focus:outline-none"
+                        onFocus={() => setIsSearchFocused(true)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setIsSearchFocused(true);
+                        }}
+                        className="w-full border border-slate-300 border-r-0 rounded-l-md px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-cg-blue"
                     />
-                    <button className="bg-cg-blue text-white font-semibold px-4 py-2 rounded-r-sm text-sm">
+                    <button type="submit" className="bg-cg-blue text-white font-semibold px-4 py-2 rounded-r-md text-sm shrink-0">
                         Buscar
                     </button>
-                </div>
+                </form>
+
+                {/* Sugerencias Móviles */}
+                {isSearchFocused && searchQuery.trim().length >= 2 && (
+                    <div className="absolute left-4 right-4 top-full mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50">
+                        {matchedTcg && (
+                            <div className="p-2 border-b border-slate-100 bg-sky-50">
+                                <button
+                                    type="button"
+                                    onClick={() => handleNavigateFranchise(matchedTcg)}
+                                    className="w-full flex items-center justify-between p-2 text-left"
+                                >
+                                    <div>
+                                        <span className="text-[10px] font-bold uppercase text-cg-blue block">Franquicia</span>
+                                        <span className="text-xs font-bold text-slate-800">Ver todo {matchedTcg}</span>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-cg-blue" />
+                                </button>
+                            </div>
+                        )}
+                        {productSuggestions.length > 0 && (
+                            <div className="p-2">
+                                {productSuggestions.map((prod) => (
+                                    <button
+                                        key={prod.id}
+                                        type="button"
+                                        onClick={() => handleSelectProduct(prod.id)}
+                                        className="w-full flex items-center gap-2.5 p-2 hover:bg-slate-50 text-left border-b border-slate-50 last:border-0"
+                                    >
+                                        <div className="w-9 h-9 rounded bg-slate-100 p-0.5 shrink-0 flex items-center justify-center">
+                                            <img
+                                                src={prod.images?.[0] || prod.image || FALLBACK_IMAGE}
+                                                alt={prod.name}
+                                                className="max-h-full max-w-full object-contain"
+                                            />
+                                        </div>
+                                        <div className="flex-grow min-w-0">
+                                            <h4 className="text-xs font-bold text-slate-800 truncate">{prod.name}</h4>
+                                            <span className="text-[10px] text-slate-400 block">{prod.tcg}</span>
+                                        </div>
+                                        <span className="text-xs font-extrabold text-slate-900 shrink-0">
+                                            {formatCOP(prod.price)}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Barra Azul de Navegación */}
