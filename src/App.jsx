@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { FavoritesProvider } from './context/FavoritesContext';
 import { Navbar } from './components/Navbar';
 import { HeroCarousel } from './components/HeroCarousel';
 import { ProductCard } from './components/ProductCard';
@@ -12,6 +13,7 @@ import { AdminPanel } from './pages/AdminPanel';
 import { TournamentsPage } from './pages/TournamentsPage';
 import { CategoryPage } from './pages/CategoryPage';
 import { ContactPage } from './pages/ContactPage';
+import { FavoritesPage } from './pages/FavoritesPage';
 import { useProducts } from './hooks/useProducts';
 import { Rocket, Handshake, MessageSquare, Loader2, MessageCircle } from 'lucide-react';
 import logoImg from './assets/logo.png';
@@ -144,6 +146,7 @@ function StoreContent() {
           <Route path="/categoria/:categorySlug" element={<CategoryPage />} />
           <Route path="/torneos" element={<TournamentsPage />} />
           <Route path="/contacto" element={<ContactPage />} />
+          <Route path="/favoritos" element={<FavoritesPage />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
       </div>
@@ -186,10 +189,12 @@ function StoreContent() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <HashRouter>
-        <StoreContent />
-      </HashRouter>
-    </CartProvider>
+    <FavoritesProvider>
+      <CartProvider>
+        <HashRouter>
+          <StoreContent />
+        </HashRouter>
+      </CartProvider>
+    </FavoritesProvider>
   );
 }

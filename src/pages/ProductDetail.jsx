@@ -3,13 +3,15 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useProducts, formatCOP, FALLBACK_IMAGE } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, ShoppingCart, Sparkles, ShieldCheck, Truck, MessageCircle, Plus, Minus, Loader2 } from 'lucide-react';
+import { useFavorites } from '../context/FavoritesContext';
+import { ArrowLeft, ShoppingCart, Sparkles, ShieldCheck, Truck, MessageCircle, Plus, Minus, Loader2, Heart } from 'lucide-react';
 
 export const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { products, loading } = useProducts();
     const { addToCart, cart } = useCart();
+    const { isFavorite, toggleFavorite } = useFavorites();
     const [quantity, setQuantity] = useState(1);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -190,6 +192,22 @@ export const ProductDetail = () => {
                             >
                                 <ShoppingCart className="w-5 h-5" />
                                 {product.stock <= 0 ? 'Agotado' : isOutOfStock ? 'Máximo en carrito' : 'Agregar al Carrito'}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => toggleFavorite(product)}
+                                title={isFavorite(product.id) ? "Quitar de favoritos" : "Guardar en favoritos"}
+                                className={`py-3.5 px-4 rounded-xl font-bold text-sm border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                                    isFavorite(product.id)
+                                        ? 'bg-rose-50 text-rose-600 border-rose-200'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-rose-600'
+                                }`}
+                            >
+                                <Heart className={`w-5 h-5 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
+                                <span className="hidden sm:inline">
+                                    {isFavorite(product.id) ? 'Favorito' : 'Favoritos'}
+                                </span>
                             </button>
 
                             <a

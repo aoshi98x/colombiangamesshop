@@ -1,20 +1,41 @@
 // src/components/ProductCard.jsx
-import { ShoppingCart, Sparkles } from 'lucide-react';
+import { ShoppingCart, Sparkles, Heart } from 'lucide-react';
 import { formatCOP, FALLBACK_IMAGE } from '../hooks/useProducts';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useFavorites } from '../context/FavoritesContext';
 
 export const ProductCard = ({ product }) => {
     const { addToCart, cart } = useCart();
+    const { isFavorite, toggleFavorite } = useFavorites();
     const itemInCart = cart.find(item => item.id === product.id);
     const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
     const isOutOfStock = product.stock <= 0 || currentQtyInCart >= product.stock;
+    const favoriteActive = isFavorite(product.id);
 
     // Tomamos la primera imagen del array
     const mainImage = product.images?.[0] || FALLBACK_IMAGE;
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-cg-blue/50 transition-all flex flex-col group">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-cg-blue/50 transition-all flex flex-col group relative">
+            {/* Botón Flotante de Favorito */}
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleFavorite(product);
+                }}
+                title={favoriteActive ? "Quitar de favoritos" : "Guardar en favoritos"}
+                className={`absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-xs cursor-pointer ${
+                    favoriteActive 
+                        ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+                        : 'bg-white/90 text-slate-400 hover:text-rose-600 hover:bg-white border border-slate-200/80'
+                }`}
+            >
+                <Heart className={`w-4 h-4 ${favoriteActive ? 'fill-current' : ''}`} />
+            </button>
+
             <Link
                 to={`/producto/${product.id}`}
                 className="relative h-60 overflow-hidden bg-slate-50 p-4 flex items-center justify-center border-b border-slate-100 block"
@@ -31,7 +52,7 @@ export const ProductCard = ({ product }) => {
                 </span>
 
                 {product.condition && (
-                    <span className="absolute top-3 right-3 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded">
+                    <span className="absolute bottom-3 right-3 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded">
                         {product.condition}
                     </span>
                 )}

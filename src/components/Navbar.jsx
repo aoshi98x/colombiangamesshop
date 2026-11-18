@@ -1,12 +1,14 @@
 // src/components/Navbar.jsx
 import { ShoppingCart, Search, Heart, ChevronDown, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useFavorites } from '../context/FavoritesContext';
 import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import logoImg from '../assets/logo.png';
 
 export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTcg, tcgCategories }) => {
     const { totalItems, setIsCartOpen } = useCart();
+    const { totalFavorites } = useFavorites();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [tcgDropdownOpen, setTcgDropdownOpen] = useState(false);
     const [promosDropdownOpen, setPromosDropdownOpen] = useState(false);
@@ -80,14 +82,20 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                 </div>
 
                 {/* Acciones Derecha (Favoritos + Carrito) */}
-                <div className="flex items-center gap-5">
-                    <button
-                        onClick={() => handleSelectCategory('Todos')}
-                        className="hidden sm:flex items-center gap-1.5 text-cg-blue hover:text-cg-blue-dark font-semibold text-sm transition-colors"
+                <div className="flex items-center gap-4 sm:gap-5">
+                    <Link
+                        to="/favoritos"
+                        className="relative flex items-center gap-1.5 text-slate-700 hover:text-rose-600 font-semibold text-sm transition-colors py-2 px-1"
+                        title="Ver mis favoritos"
                     >
-                        <Heart className="w-4 h-4" />
-                        <span>Favoritos</span>
-                    </button>
+                        <Heart className={`w-5 h-5 ${totalFavorites > 0 ? 'text-rose-500 fill-current' : 'text-slate-500'}`} />
+                        <span className="hidden sm:inline">Favoritos</span>
+                        {totalFavorites > 0 && (
+                            <span className="bg-rose-500 text-white text-[11px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-xs">
+                                {totalFavorites}
+                            </span>
+                        )}
+                    </Link>
 
                     <button
                         onClick={() => setIsCartOpen(true)}
@@ -275,6 +283,18 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                             </button>
                         </div>
                     </div>
+                    <Link
+                        to="/favoritos"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center justify-between py-1.5 font-semibold hover:text-sky-100"
+                    >
+                        <span>Mis Favoritos</span>
+                        {totalFavorites > 0 && (
+                            <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                {totalFavorites}
+                            </span>
+                        )}
+                    </Link>
                     <Link
                         to="/torneos"
                         onClick={() => setMobileMenuOpen(false)}
