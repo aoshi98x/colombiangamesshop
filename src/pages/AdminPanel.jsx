@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProducts, formatCOP, FALLBACK_IMAGE } from '../hooks/useProducts';
 import { Lock, Plus, Save, Trash2, RefreshCw, CheckCircle2, AlertCircle, LogOut, PackagePlus, Edit3 } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbRTgtBgG6mEURxF44CsSZ3cSas8JY_M5-26lZnkUcIeaLaAHjwq6REpoEFrbBZxc8/exec";
 
@@ -128,9 +129,7 @@ export const AdminPanel = () => {
         return (
             <div className="max-w-md mx-auto my-20 px-4">
                 <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg space-y-5">
-                    <div className="w-12 h-12 bg-sky-50 text-cg-blue rounded-full flex items-center justify-center mx-auto">
-                        <Lock className="w-6 h-6" />
-                    </div>
+                    <img src={logoImg} alt="Colombian Games" className="h-16 w-auto mx-auto object-contain" />
                     <div className="text-center">
                         <h1 className="text-xl font-black text-slate-800">Acceso Administrador</h1>
                         <p className="text-xs text-slate-500 mt-1">Colombian Games Shop</p>

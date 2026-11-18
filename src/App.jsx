@@ -9,8 +9,12 @@ import { HowToBuySection } from './components/HowToBuySection';
 import { CartDrawer } from './components/CartDrawer';
 import { ProductDetail } from './pages/ProductDetail';
 import { AdminPanel } from './pages/AdminPanel';
+import { TournamentsPage } from './pages/TournamentsPage';
+import { CategoryPage } from './pages/CategoryPage';
+import { ContactPage } from './pages/ContactPage';
 import { useProducts } from './hooks/useProducts';
 import { Rocket, Handshake, MessageSquare, Loader2, MessageCircle } from 'lucide-react';
+import logoImg from './assets/logo.png';
 
 function StoreContent() {
   const { products, loading, error } = useProducts();
@@ -137,13 +141,32 @@ function StoreContent() {
 
           {/* Vista Puntual de Producto */}
           <Route path="/producto/:id" element={<ProductDetail />} />
+          <Route path="/categoria/:categorySlug" element={<CategoryPage />} />
+          <Route path="/torneos" element={<TournamentsPage />} />
+          <Route path="/contacto" element={<ContactPage />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
       </div>
 
       {/* Footer */}
-      <footer id="contacto" className="bg-slate-50 border-t border-slate-200 py-8 text-center text-xs text-slate-500 mt-12">
-        <p className="font-semibold text-slate-700 mb-1">Colombian Games ¡Hobbies y más!</p>
+      <footer className="bg-slate-50 border-t border-slate-200 py-8 text-center text-xs text-slate-500 mt-12">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <img src={logoImg} alt="Colombian Games" className="h-7 w-auto object-contain" />
+          <p className="font-semibold text-slate-700 text-sm">Colombian Games ¡Hobbies y más!</p>
+        </div>
+        <div className="flex items-center justify-center gap-4 text-xs text-slate-600 my-2">
+          <a href="https://instagram.com/cgames.shop" target="_blank" rel="noopener noreferrer" className="hover:text-rose-600 transition-colors">
+            Instagram
+          </a>
+          <span>•</span>
+          <a href="https://www.facebook.com/colombiangameshop" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+            Facebook
+          </a>
+          <span>•</span>
+          <a href="https://wa.me/573000000000" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-600 transition-colors">
+            WhatsApp
+          </a>
+        </div>
         <p>© 2026 Todos los derechos reservados • Bogotá, Colombia</p>
       </footer>
 

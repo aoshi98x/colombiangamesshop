@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 const BANNERS = [
     {
         id: 1,
-        image: "https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?auto=format&fit=crop&w=1400&q=80",
+        image: "https://tcg-corner.com/cdn/shop/files/Banner_20Categorias_20TCG_20-_20YiGiOh_42119e7e-bfa6-444c-8d97-7693c584d769_1920x.png",
         badge: "Trading Card Game",
         title: "Yu-Gi-Oh! & TCGs",
         subtitle: "Encuentra singles, cajas selladas, sobres y accesorios originales con envío seguro a todo Colombia.",
@@ -14,10 +14,10 @@ const BANNERS = [
     },
     {
         id: 2,
-        image: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=1400&q=80",
+        image: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi3gY1yaSs30TKb2phfklWs51aIfVx4RW2bCTGc7pUDuairJbQH3JNJXxcB6kTTB6wEvP87_OwIJwYv04A1oJY6S-AvXCXNtbCtyhpNEI_KuYAxFdCN8TimbIjth2Pizbqwimfwx4pyuJLiG3VlZvbrwst3cB9t9WLiY8JrL7TELBrjdGlO3ghYOC_8sTw/s1600/Banner_2.png",
         badge: "Nuevas Expansiones",
-        title: "Pokémon TCG & One Piece",
-        subtitle: "Booster Boxes, Elite Trainer Boxes y cartas sueltas verificadas en estado Near Mint.",
+        title: "Kingdom Beast TCG y Nuevos juegos",
+        subtitle: "Sitio oficial para comprar producto y juegos 100% colombianos",
         bgColor: "from-slate-900/90 via-slate-900/50 to-transparent"
     }
 ];

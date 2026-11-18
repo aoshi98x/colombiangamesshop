@@ -2,18 +2,36 @@
 import { ShoppingCart, Search, Heart, ChevronDown, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import logoImg from '../assets/logo.png';
 
 export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTcg, tcgCategories }) => {
     const { totalItems, setIsCartOpen } = useCart();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [tcgDropdownOpen, setTcgDropdownOpen] = useState(false);
+    const [promosDropdownOpen, setPromosDropdownOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Filtrar categorías que no sean promos o accesorios para el dropdown de TCG
+    const franchiseCategories = tcgCategories.filter(tcg => {
+        const lower = tcg.toLowerCase();
+        return tcg !== 'Todos' && !lower.includes('promo') && !lower.includes('accesorio');
+    });
+
     const handleSelectCategory = (category) => {
         setSelectedTcg(category);
         setTcgDropdownOpen(false);
+        setPromosDropdownOpen(false);
         setMobileMenuOpen(false);
         navigate('/');
+    };
+
+    const handleNavigateFranchise = (tcg) => {
+        setTcgDropdownOpen(false);
+        setPromosDropdownOpen(false);
+        setMobileMenuOpen(false);
+        navigate(`/categoria/${encodeURIComponent(tcg)}`);
     };
 
     return (
@@ -25,12 +43,13 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                 <a
                     href="#inicio"
                     onClick={() => handleSelectCategory('Todos')}
-                    className="flex items-center gap-2.5 shrink-0"
+                    className="flex items-center gap-2.5 shrink-0 group"
                 >
-                    {/* Si tienes la URL de tu logo oficial, puedes reemplazar este bloque por una etiqueta <img src="TU_LOGO.png" /> */}
-                    <div className="bg-amber-400 border-2 border-blue-700 text-blue-900 font-black px-2.5 py-1 rounded-md text-lg italic shadow-sm">
-                        CG
-                    </div>
+                    <img
+                        src={logoImg}
+                        alt="Colombian Games"
+                        className="h-11 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform"
+                    />
                     <div className="leading-tight">
                         <span className="text-sm sm:text-base font-black text-slate-900 uppercase block tracking-tight">
                             Colombian Games
@@ -134,41 +153,80 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                             </button>
 
                             {tcgDropdownOpen && (
-                                <div className="absolute left-0 top-full w-48 bg-white text-slate-800 shadow-lg rounded-b-md border border-slate-100 py-1 z-50">
-                                    {tcgCategories.map((tcg) => (
+                                <div className="absolute left-0 top-full w-52 bg-white text-slate-800 shadow-xl rounded-b-md border border-slate-100 py-1.5 z-50">
+                                    <button
+                                        onClick={() => handleSelectCategory('Todos')}
+                                        className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-500 hover:bg-sky-50 hover:text-cg-blue border-b border-slate-100 transition-colors cursor-pointer"
+                                    >
+                                        Ver Catálogo Completo
+                                    </button>
+                                    {franchiseCategories.map((tcg) => (
                                         <button
                                             key={tcg}
-                                            onClick={() => handleSelectCategory(tcg)}
-                                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-sky-50 hover:text-cg-blue transition-colors ${selectedTcg === tcg ? 'font-bold text-cg-blue bg-sky-50/50' : ''
-                                                }`}
+                                            onClick={() => handleNavigateFranchise(tcg)}
+                                            className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 hover:text-cg-blue transition-colors cursor-pointer"
                                         >
-                                            {tcg === 'Todos' ? 'Ver Todos los TCG' : tcg}
+                                            {tcg}
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </li>
 
-                        <li>
-                            <button
-                                onClick={() => handleSelectCategory('Accesorios')}
+                        {/* Desplegable Promos y Accesorios */}
+                        <li
+                            className="relative"
+                            onMouseEnter={() => setPromosDropdownOpen(true)}
+                            onMouseLeave={() => setPromosDropdownOpen(false)}
+                        >
+                            <button 
+                                onClick={() => handleNavigateFranchise('promos-accesorios')}
                                 className="flex items-center gap-1 hover:text-sky-100 transition-colors py-3 cursor-pointer"
                             >
                                 <span>Promos y Accesorios</span>
                                 <ChevronDown className="w-4 h-4" />
                             </button>
+
+                            {promosDropdownOpen && (
+                                <div className="absolute left-0 top-full w-56 bg-white text-slate-800 shadow-xl rounded-b-md border border-slate-100 py-1.5 z-50">
+                                    <button
+                                        onClick={() => handleNavigateFranchise('promos-accesorios')}
+                                        className="w-full text-left px-4 py-2.5 text-xs font-bold text-cg-blue bg-sky-50/50 hover:bg-sky-100 transition-colors cursor-pointer"
+                                    >
+                                        Ver Todo (Promos & Accesorios)
+                                    </button>
+                                    <button
+                                        onClick={() => handleNavigateFranchise('Promo')}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 hover:text-cg-blue transition-colors cursor-pointer"
+                                    >
+                                        Cartas Promo
+                                    </button>
+                                    <button
+                                        onClick={() => handleNavigateFranchise('Accesorios')}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 hover:text-cg-blue transition-colors cursor-pointer"
+                                    >
+                                        Accesorios y Protección
+                                    </button>
+                                </div>
+                            )}
                         </li>
 
                         <li>
-                            <a href="#torneos" className="hover:text-sky-100 transition-colors py-3">
+                            <Link
+                                to="/torneos"
+                                className={`hover:text-sky-100 transition-colors py-3 ${location.pathname === '/torneos' ? 'underline underline-offset-4 decoration-2 font-bold' : ''}`}
+                            >
                                 Torneos
-                            </a>
+                            </Link>
                         </li>
 
                         <li>
-                            <a href="#contacto" className="hover:text-sky-100 transition-colors py-3">
+                            <Link
+                                to="/contacto"
+                                className={`hover:text-sky-100 transition-colors py-3 ${location.pathname === '/contacto' ? 'underline underline-offset-4 decoration-2 font-bold' : ''}`}
+                            >
                                 Contacto
-                            </a>
+                            </Link>
                         </li>
                     </ul>
                 </div>
@@ -181,12 +239,12 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                         Inicio
                     </button>
                     <div className="py-1">
-                        <span className="text-xs uppercase text-sky-200 font-bold block mb-1">Categorías TCG</span>
+                        <span className="text-xs uppercase text-sky-200 font-bold block mb-1">Franquicias TCG</span>
                         <div className="pl-3 space-y-1.5">
-                            {tcgCategories.map(tcg => (
+                            {franchiseCategories.map(tcg => (
                                 <button
                                     key={tcg}
-                                    onClick={() => handleSelectCategory(tcg)}
+                                    onClick={() => handleNavigateFranchise(tcg)}
                                     className="block w-full text-left text-sm py-1"
                                 >
                                     {tcg}
@@ -194,7 +252,43 @@ export const Navbar = ({ searchQuery, setSearchQuery, selectedTcg, setSelectedTc
                             ))}
                         </div>
                     </div>
-                    <a href="#contacto" className="block py-1.5 font-semibold">Contacto</a>
+                    <div className="py-1">
+                        <span className="text-xs uppercase text-sky-200 font-bold block mb-1">Promos y Accesorios</span>
+                        <div className="pl-3 space-y-1.5">
+                            <button
+                                onClick={() => handleNavigateFranchise('promos-accesorios')}
+                                className="block w-full text-left text-sm py-1"
+                            >
+                                Ver Todo (Promos & Accesorios)
+                            </button>
+                            <button
+                                onClick={() => handleNavigateFranchise('Promo')}
+                                className="block w-full text-left text-sm py-1"
+                            >
+                                Cartas Promo
+                            </button>
+                            <button
+                                onClick={() => handleNavigateFranchise('Accesorios')}
+                                className="block w-full text-left text-sm py-1"
+                            >
+                                Accesorios y Protección
+                            </button>
+                        </div>
+                    </div>
+                    <Link
+                        to="/torneos"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1.5 font-semibold hover:text-sky-100"
+                    >
+                        Torneos
+                    </Link>
+                    <Link
+                        to="/contacto"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1.5 font-semibold hover:text-sky-100"
+                    >
+                        Contacto
+                    </Link>
                 </div>
             )}
         </header>
